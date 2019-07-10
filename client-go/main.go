@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -21,28 +21,14 @@ func main() {
 		panic(err.Error())
 	}
 
-	deploymentClient := clientset.AppsV1().Deployments("default")
+	jobClient := clientset.BatchV1().Jobs("default")
 
-	deployment := &appsv1.Deployment{
+	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-deployment",
-			Labels: map[string]string{
-				"app": "test",
-			},
+			Name: "test-cowsay",
 		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(1),
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "test",
-				},
-			},
+		Spec: batchv1.JobSpec{
 			Template: apiv1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": "test",
-					},
-				},
 				Spec: apiv1.PodSpec{
 					Containers: []apiv1.Container{
 						{
@@ -54,14 +40,15 @@ func main() {
 							},
 						},
 					},
+					RestartPolicy: apiv1.RestartPolicyNever,
 				},
 			},
 		},
 	}
 
-	deployment, err = deploymentClient.Create(deployment)
+	job, err = jobClient.Create(job)
 	if err != nil {
-		log.Printf("Failed to create deployment: %v", err)
+		log.Printf("Failed to create job: %v", err)
 	}
 }
 
